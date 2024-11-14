@@ -49,12 +49,11 @@ namespace UpdateDomains
         static void PopulateFile(string filePath, HashSet<string> domainsList)
         {
             WriteLog("\n\n");
-            HashSet<string> newDomainsList = new HashSet<string>(domainsList); // Further in the code we will be making changes to HashSet we've received on function execution. Variables from function execution are references to already existing ones, since we don't want to ruin our domainsList, we're making up a new one.
-
+            
 
             if (File.Exists(filePath) == true)
             {
-                WriteLog($"[~] \"{filePath}\" File was found!");
+                WriteLog($"[~] \"{filePath}\" Detected!");
                 WriteLog("[~] Attempting to update the file...");
                 Thread.Sleep(3000); // Intentional slow-down to let user read LOG we've just printed.
 
@@ -62,7 +61,7 @@ namespace UpdateDomains
                 HashSet<string> localDomainsHashSet = new HashSet<string>(File.ReadAllLines(filePath));
                 HashSet<string> uniqueDomains = new HashSet<string>(); // HashSet of domains we consider "unique" - those domains aren't present in file yet.
 
-                foreach (string domain in newDomainsList)
+                foreach (string domain in domainsList)
                 {
                     if (localDomainsHashSet.Contains(domain) == false)
                     {
@@ -78,10 +77,8 @@ namespace UpdateDomains
                         localDomainsHashSet.Add(domain);
                     }
 
-                    HashSet<string> outDomainsList = new HashSet<string>(localDomainsHashSet.OrderBy(item => item)); 
-                    File.WriteAllLines(filePath, outDomainsList);
 
-
+                    File.WriteAllLines(filePath, localDomainsHashSet.OrderBy(item => item));
                     WriteLog($"[~] \"{filePath}\" File successfully updated!");
                 }
                 else
@@ -99,16 +96,18 @@ namespace UpdateDomains
                 CheckDefaultDomains();
 
 
-                List<string> defaultDomains = new List<string>(File.ReadAllLines(defaultDomainsFilePath));
+                HashSet<string> newDomainsList = new HashSet<string>(domainsList); // Further in the code we will be making changes to HashSet we've received on function execution. Variables from function execution are references to already existing ones, since we don't want to ruin our domainsList, we're making up a new one.
+                HashSet<string> defaultDomains = new HashSet<string>(File.ReadAllLines(defaultDomainsFilePath));
                 foreach (string domain in defaultDomains)
                 {
-                    newDomainsList.Add(domain);
+                    if (newDomainsList.Contains(domain) == false)
+                    {
+                        newDomainsList.Add(domain);
+                    }
                 }
 
-                HashSet<string> outDomainsList = new HashSet<string>(newDomainsList.OrderBy(item => item)); // Sort List entries.
-                File.WriteAllLines(filePath, outDomainsList);
-
-
+                
+                File.WriteAllLines(filePath, newDomainsList.OrderBy(item => item));
                 WriteLog($"[~] \"{filePath}\" File successfully created!");
             }
         }
