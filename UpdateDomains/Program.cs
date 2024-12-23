@@ -12,22 +12,15 @@ namespace UpdateDomains
 {
     internal class Program
     {
-        internal const string gDPILocalDomainsFilePath   = "russia-blacklist.txt";
-        internal const string zapretLocalDomainsFilePath = "list-general.txt";
-        internal const string defaultDomainsFilePath     = "Default Domains.txt";
-        internal const string logFilePath                = "Update Domains.log";
+        const string gDPILocalDomainsFilePath                 = "russia-blacklist.txt";
+        const string zapretLocalDomainsFilePath               = "lists\\other.txt";
+        const string zapretWinBundleLocalDomainsFilePath      = "list-youtube.txt";
+        const string zapretDiscordYouTubeLocalDomainsFilePath = "list-general.txt";
+        const string defaultDomainsFilePath                   = "Default Domains.txt";
+
+        const string logFilePath                              = "Update Domains.log";
 
 
-
-
-        static void Exit()
-        {
-            Console.Write("\nPress ENTER to continue...");
-            Console.ReadLine();
-
-
-            Environment.Exit(0);
-        }
 
 
         static void FlushLog() => File.WriteAllText(logFilePath, string.Empty);
@@ -35,6 +28,16 @@ namespace UpdateDomains
         {
             Console.WriteLine(message);
             File.AppendAllText(logFilePath, $"{message}\n");
+        }
+
+
+        static void Exit()
+        {
+            WriteLog("\nPress ENTER to continue...");
+            Console.ReadLine();
+
+
+            Environment.Exit(0);
         }
 
 
@@ -110,6 +113,9 @@ namespace UpdateDomains
                 File.WriteAllLines(filePath, newDomainsList.OrderBy(item => item));
                 WriteLog($"[~] \"{filePath}\" File successfully created!");
             }
+
+
+            WriteLog("\n");
         }
 
 
@@ -131,14 +137,19 @@ namespace UpdateDomains
 
 
             WriteLog("[~] Attempting to fetch domains...");
-
-
             var getDomainsResponse = Networking.Get("https://zapret.cranchpalace.info/getDomains", 300);
-            if (getDomainsResponse.statusCode == Networking.E_StatusCode.OK)
+            if (getDomainsResponse.statusCode != Networking.E_StatusCode.OK)
+            {
+                WriteLog("[ERROR] Failed to fetch domains.");
+            }
+            else
             {
                 string getDomainsContent = getDomainsResponse.content;
                 HashSet<string> getDomainsList = new HashSet<string>(getDomainsContent.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries));
                 WriteLog($"[~] Domains fetched: {getDomainsList.Count}");
+
+
+                WriteLog(string.Empty);
 
 
                 WriteLog("[~] Scanning for Goodbye DPI...");
@@ -153,8 +164,11 @@ namespace UpdateDomains
                 }
 
 
+                WriteLog(string.Empty);
+
+
                 WriteLog("[~] Scanning for Zapret...");
-                if (Directory.Exists("bin")) // Directory included with: https://github.com/Flowseal/zapret-discord-youtube
+                if (Directory.Exists("bin") && Directory.Exists("lists")) // Directories included with: https://github.com/censorliber/zapret
                 {
                     WriteLog("[~] Zapret detected.");
                     PopulateFile(zapretLocalDomainsFilePath, getDomainsList);
@@ -163,10 +177,36 @@ namespace UpdateDomains
                 {
                     WriteLog("[~] Zapret wasn't found.");
                 }
-            }
-            else
-            {
-                WriteLog("[ERROR] Failed to fetch domains.");
+
+
+                WriteLog(string.Empty);
+
+
+                WriteLog("[~] Scanning for Zapret Win Bundle...");
+                if (File.Exists("killall.exe") && File.Exists("_CMD_ADMIN.cmd")) // Files included with: https://github.com/bol-van/zapret-win-bundle
+                {
+                    WriteLog("[~] Zapret Win Bundle detected.");
+                    PopulateFile(zapretWinBundleLocalDomainsFilePath, getDomainsList);
+                }
+                else
+                {
+                    WriteLog("[~] Zapret Win Bundle wasn't found.");
+                }
+
+
+                WriteLog(string.Empty);
+
+
+                WriteLog("[~] Scanning for Zapret - Disord - Youtube...");
+                if (Directory.Exists("bin") && File.Exists("general.bat")) // Directory & File included with: https://github.com/Flowseal/zapret-discord-youtube
+                {
+                    WriteLog("[~] Zapret - Disord - Youtube detected.");
+                    PopulateFile(zapretDiscordYouTubeLocalDomainsFilePath, getDomainsList);
+                }
+                else
+                {
+                    WriteLog("[~] Zapret - Disord - Youtube wasn't found.");
+                }
             }
 
 
